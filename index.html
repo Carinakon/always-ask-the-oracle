@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Always Ask the Oracle</title>
+<meta name="description" content="Ask the oracle anything. Turn up the temperature and watch it lose its mind.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=Shrikhand&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg1: #efece5; --bg2: #fbfaf7; --text: #24231f; --accent: #4a5a6a; --btn-text: #fff;
+    --card: rgba(255,255,255,.75);
+    --w: 0;          /* wobble amplitude */
+    --spin: 20s;     /* crystal ball swirl speed */
+    --stars: 0;      /* star layer opacity */
+    --psy: 0;        /* psychedelic layer opacity */
+    --font-head: 'Cormorant Garamond', serif;
+    --font-answer: 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    color: var(--text);
+    background: radial-gradient(ellipse at 50% 0%, var(--bg2), var(--bg1) 75%) fixed;
+    background-color: var(--bg1);
+    font-family: 'Inter', system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ---------- background layers ---------- */
+  .psy {
+    position: fixed; inset: -50%; z-index: 0; pointer-events: none;
+    background: conic-gradient(from 0deg, #ff006e, #ffbe0b, #00f5d4, #8338ec, #3a86ff, #fb5607, #ff006e);
+    filter: blur(60px);
+    opacity: var(--psy);
+    mix-blend-mode: screen;
+    animation: spin 14s linear infinite;
+  }
+  .stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: var(--stars); }
+  .star {
+    position: absolute; width: 3px; height: 3px; border-radius: 50%;
+    background: #fff; box-shadow: 0 0 6px #fff;
+    animation: twinkle 3s ease-in-out infinite;
+  }
+  .spark {
+    position: fixed; z-index: 50; pointer-events: none; font-size: 14px;
+    color: var(--accent); text-shadow: 0 0 8px var(--accent);
+    animation: spark 900ms ease-out forwards;
+  }
+
+  /* ---------- layout ---------- */
+  .wrap { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 40px 16px 64px; }
+  header { text-align: center; }
+  h1 {
+    font-family: var(--font-head); font-size: clamp(2.3rem, 8vw, 4rem);
+    margin: 0; line-height: 1.05; letter-spacing: .01em;
+    text-shadow: 0 0 calc(var(--stars) * 24px) var(--accent);
+  }
+  .tagline { margin: 10px 0 0; opacity: .75; font-size: 1.02rem; }
+
+  /* ---------- crystal ball ---------- */
+  .ball-wrap { display: flex; justify-content: center; margin: 28px 0 8px; }
+  .ball {
+    position: relative; width: 170px; height: 170px; border-radius: 50%; overflow: hidden;
+    background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.9), rgba(255,255,255,.15) 30%, transparent 60%),
+                radial-gradient(circle at 50% 60%, var(--accent), var(--bg1) 80%);
+    box-shadow: 0 0 calc(10px + var(--stars) * 60px) var(--accent), inset 0 -20px 40px rgba(0,0,0,.35);
+    transition: transform .3s;
+  }
+  .ball::after {
+    content: ''; position: absolute; inset: 15%; border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent, rgba(255,255,255,.55), transparent 40%, var(--accent), transparent 75%);
+    filter: blur(8px); opacity: calc(.15 + var(--stars) * .7);
+    animation: spin var(--spin) linear infinite;
+  }
+  .ball.thinking { animation: shake .45s ease-in-out infinite; }
+  .ball-base {
+    width: 120px; height: 26px; margin: -6px auto 0; border-radius: 0 0 40px 40px;
+    background: linear-gradient(#5a3b22, #2e1d10); box-shadow: 0 8px 18px rgba(0,0,0,.35);
+  }
+  body.lvl-advisor .ball { filter: grayscale(.85); }
+
+  /* ---------- card ---------- */
+  .card {
+    background: var(--card);
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    border-radius: 22px; padding: 22px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    margin-top: 22px;
+  }
+  label.q { display: block; font-weight: 600; margin-bottom: 8px; }
+  textarea {
+    width: 100%; min-height: 92px; resize: vertical;
+    font: inherit; font-size: 1.05rem; color: var(--text);
+    background: color-mix(in srgb, var(--bg1) 55%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    border-radius: 14px; padding: 12px 14px;
+  }
+  textarea::placeholder { color: var(--text); opacity: .5; }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .chip {
+    font: inherit; font-size: .85rem; cursor: pointer; color: var(--text);
+    background: transparent; border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    border-radius: 999px; padding: 5px 12px;
+  }
+  .chip:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+
+  /* ---------- temperature ---------- */
+  .temp { margin-top: 20px; }
+  .temp-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .temp-top strong { font-size: 1rem; }
+  .temp-value { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 1.3rem; color: var(--accent); }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 12px; margin: 14px 0 6px;
+    border-radius: 999px; cursor: pointer;
+    background: linear-gradient(90deg, #9aa3ab, #6c7fd8 30%, #a64ac9 55%, #ffc857 70%, #ff006e 85%, #00f5d4);
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 30px; height: 30px; border-radius: 50%;
+    background: #fff; border: 4px solid var(--accent); box-shadow: 0 2px 10px rgba(0,0,0,.35);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #fff; border: 4px solid var(--accent); box-shadow: 0 2px 10px rgba(0,0,0,.35);
+  }
+  input[type=range]:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  .scale { display: flex; justify-content: space-between; font-size: .78rem; opacity: .7; }
+  .persona { margin-top: 12px; padding: 10px 14px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 16%, transparent); }
+  .persona b { font-family: var(--font-head); font-size: 1.15rem; }
+  .persona span { display: block; font-size: .9rem; opacity: .8; margin-top: 2px; }
+
+  button.ask {
+    margin-top: 20px; width: 100%; cursor: pointer;
+    font: 600 1.1rem 'Inter', sans-serif; letter-spacing: .02em;
+    color: var(--btn-text); background: var(--accent);
+    border: 0; border-radius: 14px; padding: 15px;
+    box-shadow: 0 0 calc(var(--stars) * 30px) var(--accent);
+    transition: transform .15s, filter .15s;
+  }
+  button.ask:hover { transform: translateY(-1px); filter: brightness(1.08); }
+  button.ask:disabled { opacity: .6; cursor: wait; transform: none; }
+
+  /* ---------- answer ---------- */
+  /* The answer card always has a calm, solid background so the text stays readable */
+  .answer { display: none; background: rgba(14,6,30,.72); color: #fff8ec; border-color: color-mix(in srgb, var(--accent) 70%, transparent); }
+  body.lvl-advisor .answer { background: rgba(255,255,255,.92); color: #24231f; }
+  .answer.show { display: block; }
+  .answer-meta { font-size: .82rem; opacity: .75; margin-bottom: 10px; }
+  .answer-q { font-style: italic; opacity: .85; margin: 0 0 12px; }
+  .answer-text { font-family: var(--font-answer); font-size: 1.2rem; line-height: 1.65; margin: 0; }
+  .note { font-size: .82rem; opacity: .7; margin-top: 12px; }
+
+  /* wobbling letters (title only): amplitude comes from --w */
+  .word { display: inline-block; white-space: nowrap; }
+  .ch { display: inline-block; opacity: 0; animation: wob 1.8s ease-in-out infinite; }
+  .ch.on { opacity: 1; transition: opacity .25s; }
+  .answer-text .ch { animation: none; }
+
+  /* ---------- witch on a broom ---------- */
+  .witch { position: fixed; left: 0; z-index: 60; width: 250px; pointer-events: none; display: none; }
+  .witch.fly { display: block; animation: fly 4.2s cubic-bezier(.45,.05,.55,.95) forwards; }
+  .witch .bob { animation: bob .9s ease-in-out infinite; }
+  .witch .cape { transform-origin: 96px 34px; animation: flap .35s ease-in-out infinite alternate; }
+  .witch .bubble { opacity: 0; animation: bubble 4.2s forwards; }
+
+  .history h2 { font-family: var(--font-head); font-size: 1.3rem; margin: 0 0 10px; }
+  .history ol { margin: 0; padding-left: 20px; }
+  .history li { margin-bottom: 10px; font-size: .92rem; }
+  .history li small { opacity: .65; }
+
+  footer { text-align: center; font-size: .82rem; opacity: .65; margin-top: 28px; }
+
+  /* ---------- per-level type ---------- */
+  body.lvl-mystic   { --font-head: 'Cinzel', serif; --font-answer: 'Cormorant Garamond', serif; }
+  body.lvl-fortune  { --font-head: 'Cinzel Decorative', serif; --font-answer: 'Cormorant Garamond', serif; }
+  body.lvl-chaos    { --font-head: 'Shrikhand', cursive; --font-answer: 'Cormorant Garamond', serif; }
+  body.lvl-mystic .answer-text, body.lvl-fortune .answer-text, body.lvl-chaos .answer-text { font-size: 1.35rem; font-weight: 600; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes twinkle { 0%,100% { opacity: .2; } 50% { opacity: 1; } }
+  @keyframes shake { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-4deg) scale(1.03); } 75% { transform: rotate(4deg) scale(1.03); } }
+  @keyframes wob {
+    0%,100% { transform: translateY(0) rotate(0); }
+    25% { transform: translateY(calc(var(--w) * -1.2px)) rotate(calc(var(--w) * -3deg)); }
+    75% { transform: translateY(calc(var(--w) * 1.2px)) rotate(calc(var(--w) * 3deg)); }
+  }
+  @keyframes spark { to { transform: translateY(-30px) scale(.3); opacity: 0; } }
+  @keyframes fly {
+    from { transform: translateX(-280px) rotate(-6deg); }
+    50%  { transform: translateX(50vw) rotate(4deg); }
+    to   { transform: translateX(calc(100vw + 40px)) rotate(-8deg); }
+  }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+  @keyframes flap { from { transform: skewX(0); } to { transform: skewX(14deg); } }
+  @keyframes bubble { 0%,15% { opacity: 0; } 25%,70% { opacity: 1; } 85%,100% { opacity: 0; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ch, .psy, .ball::after, .star, .ball.thinking { animation: none !important; }
+    .ch { opacity: 1; }
+  }
+</style>
+</head>
+<body class="lvl-fortune">
+  <div class="psy" aria-hidden="true"></div>
+  <div class="stars" id="stars" aria-hidden="true"></div>
+
+  <div class="witch" id="witch" aria-hidden="true">
+    <div class="bob">
+      <svg viewBox="0 -40 200 150" width="250" xmlns="http://www.w3.org/2000/svg">
+        <!-- speech bubble -->
+        <g class="bubble">
+          <rect x="128" y="-38" width="70" height="26" rx="12" fill="#fff"/>
+          <path d="M140,-13 L134,-2 L150,-13 Z" fill="#fff"/>
+          <text x="163" y="-20" text-anchor="middle" font-family="Inter, sans-serif" font-weight="700" font-size="12" fill="#2b1840">Hehehe!</text>
+        </g>
+        <!-- broom -->
+        <line x1="20" y1="82" x2="185" y2="64" stroke="#7a4a21" stroke-width="5" stroke-linecap="round"/>
+        <path d="M34,80 L0,62 L-2,78 L2,98 Z" fill="#e0a43a" stroke="#a8711e" stroke-width="1.5"/>
+        <path d="M30,80 L4,70 M30,81 L2,84 M30,82 L6,94" stroke="#a8711e" stroke-width="1.5"/>
+        <rect x="28" y="74" width="8" height="12" rx="2" fill="#7a2a8c" transform="rotate(-6 32 80)"/>
+        <!-- cape -->
+        <path class="cape" d="M96,34 Q70,40 58,72 Q76,66 84,74 Q92,60 104,48 Z" fill="#5b1f8a"/>
+        <!-- dress -->
+        <path d="M94,34 L124,76 L84,78 Z" fill="#2b1840"/>
+        <!-- leg & boot -->
+        <path d="M112,72 L130,86" stroke="#2b1840" stroke-width="7" stroke-linecap="round"/>
+        <path d="M126,84 L144,86 L142,80 Z" fill="#111" stroke="#111" stroke-width="3" stroke-linejoin="round"/>
+        <!-- arm holding broom -->
+        <path d="M104,44 L138,66" stroke="#2b1840" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="139" cy="67" r="4" fill="#8bc34a"/>
+        <!-- hair -->
+        <path d="M94,22 Q82,34 76,44 Q88,38 96,32 Z" fill="#ff7a1a"/>
+        <!-- head -->
+        <circle cx="103" cy="24" r="10" fill="#8bc34a"/>
+        <path d="M112,24 L121,28 L111,29 Z" fill="#7cb342"/>
+        <circle cx="107" cy="21" r="1.6" fill="#111"/>
+        <path d="M104,29 Q108,32 111,29" stroke="#111" stroke-width="1.3" fill="none"/>
+        <!-- hat -->
+        <ellipse cx="102" cy="15" rx="18" ry="4" fill="#1d0f2e"/>
+        <path d="M92,14 Q96,-6 82,-24 Q104,-14 114,14 Z" fill="#1d0f2e"/>
+        <path d="M94,9 L112,9 L113,13 L93,13 Z" fill="#ffc857"/>
+      </svg>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <header>
+      <h1 id="title" aria-label="Always Ask the Oracle">Always Ask the Oracle</h1>
+      <p class="tagline">Ask anything. Then turn up the temperature and watch the oracle lose its mind.</p>
+    </header>
+
+    <div class="ball-wrap"><div><div class="ball" id="ball"></div><div class="ball-base"></div></div></div>
+
+    <form class="card" id="form">
+      <label class="q" for="question">What do you want to know?</label>
+      <textarea id="question" maxlength="500" placeholder="Should I quit my job and open a llama farm?" required></textarea>
+      <div class="chips" id="chips">
+        <button type="button" class="chip">Will I pass my exam?</button>
+        <button type="button" class="chip">Should I text my ex?</button>
+        <button type="button" class="chip">Pizza or pasta tonight?</button>
+        <button type="button" class="chip">What should I do with my life?</button>
+        <button type="button" class="chip">Why did the chicken cross the road?</button>
+      </div>
+
+      <div class="temp">
+        <div class="temp-top">
+          <label for="temp"><strong>🌡️ Temperature</strong></label>
+          <span class="temp-value" id="tempValue">0.90</span>
+        </div>
+        <input type="range" id="temp" min="0" max="1.3" step="0.05" value="0.8">
+        <div class="scale"><span>0.0 · predictable</span><span>1.3 · unhinged</span></div>
+        <div class="persona" aria-live="polite"><b id="personaName">Madame Temperatura</b><span id="personaDesc"></span></div>
+      </div>
+
+      <button class="ask" id="askBtn" type="submit">🔮 Consult the Oracle</button>
+    </form>
+
+    <section class="card answer" id="answer" aria-live="polite">
+      <div class="answer-meta" id="answerMeta"></div>
+      <p class="answer-q" id="answerQ"></p>
+      <p class="answer-text" id="answerText"></p>
+      <p class="note" id="answerNote"></p>
+    </section>
+
+    <section class="card history" id="history" hidden>
+      <h2>Past prophecies</h2>
+      <ol id="historyList"></ol>
+    </section>
+
+    <footer>Low temperature = predictable · High temperature = unpredictable</footer>
+  </main>
+
+<script>
+const LEVELS = [
+  { max: 0.3, key: 'advisor', name: 'The Sober Advisor', desc: 'Calm, practical, predictable. Basically a spreadsheet with manners.',
+    loading: ['Consulting the spreadsheet…', 'Weighing the pros and cons…'] },
+  { max: 0.65, key: 'mystic', name: 'The Wise Mystic', desc: 'Thoughtful advice with a sprinkle of stardust.',
+    loading: ['Reading the stars…', 'Listening to the wind…'] },
+  { max: 1.0, key: 'fortune', name: 'Madame Temperatura', desc: 'Dramatic fairground fortune teller. Expect theatrics.',
+    loading: ['Polishing the crystal ball…', 'Shuffling the tarot deck…', 'Summoning the spirits…'] },
+  { max: 1.31, key: 'chaos', name: 'The Cosmic Chaos Oracle', desc: 'Wildly unpredictable. Possibly broadcasting from another dimension.',
+    loading: ['Bribing a passing comet…', 'Asking a goose in the 4th dimension…', 'Untangling the multiverse…'] },
+];
+
+// Colour stops along the slider: sober → mystic → fortune teller → psychedelic
+const STOPS = [
+  { t: 0,    bg1: '#efece5', bg2: '#fbfaf7', text: '#24231f', accent: '#4a5a6a', btn: '#ffffff' },
+  { t: 0.33, bg1: '#10162e', bg2: '#2c2f63', text: '#eef0ff', accent: '#a9b8ff', btn: '#10162e' },
+  { t: 0.66, bg1: '#1c0628', bg2: '#571a5a', text: '#fff3d6', accent: '#ffc857', btn: '#2a0b3d' },
+  { t: 1,    bg1: '#2b0a6b', bg2: '#ff2e88', text: '#ffffff', accent: '#00f5d4', btn: '#1a0033' },
+];
+
+// Demo answers (used without an API key) still react to the question:
+// "A or B?" picks an option, yes/no questions get a verdict, everything else gets a general prophecy.
+const DEMO = {
+  advisor: {
+    or: p => `Go with ${p}. It's the simpler choice right now, and you can always try the other option next time.`,
+    yes: () => `Yes, probably. If you've thought it through and the downside is small, go ahead with a clear plan.`,
+    no: () => `Not right now. Collect a bit more information first, then decide again in a few days.`,
+    other: q => `On “${q}”: break it into one small next step you can do today. Clarity usually comes from action, not more thinking.`,
+  },
+  mystic: {
+    or: p => `The moon leans gently toward ${p}. Choose it, and let the other path wait for another night.`,
+    yes: () => `The stars say yes, softly. Walk toward it, but walk slowly and with open eyes.`,
+    no: () => `The stars say not yet. A river that rushes only floods its own banks. Wait for the next full moon.`,
+    other: q => `On “${q}”, the stars advise patience: the answer grows like moonlight, a little brighter each night.`,
+  },
+  fortune: {
+    or: p => `Darling, the crystal ball has spoken: ${p.toUpperCase()}! The other option was seen weeping in a dark alley. Choose ${p} and never look back!`,
+    yes: () => `YES, darling! The cards are practically screaming it! But beware: success only arrives once you put down your phone.`,
+    no: () => `Oh no no no, darling. The crystal ball turned cloudy and sighed dramatically. Not now. Ask me again after a snack.`,
+    other: q => `Aaah, “${q}”… I see it in the mists, darling! A great change is coming, probably on a Tuesday, possibly involving cake.`,
+  },
+  chaos: {
+    or: p => `A goose in a tuxedo flipped a cosmic coin and it landed on ${p}. The multiverse has spoken. Also, wear mismatched socks.`,
+    yes: () => `The multiverse voted 7 to 3 in favour of YES, with one abstention from a sentient teapot. Proceed immediately!`,
+    no: () => `A comet whispered “absolutely not” while doing a backflip. Wait until the moon finishes its sandwich.`,
+    other: q => `“${q}”? The answer is hidden in a croissant on the dark side of the moon. Eat it. Ascend. Then reply to your emails.`,
+  },
+};
+
+function demoAnswer(question, key) {
+  const q = question.trim().replace(/[?!.\s]+$/, '');
+  const set = DEMO[key];
+  const or = q.match(/(\S+)\s+or\s+(\S+)/i);
+  if (or) return set.or(Math.random() < 0.5 ? or[1] : or[2].replace(/[^\p{L}\p{N}'-]/gu, ''));
+  if (/^(should|will|is|can|do|does|am|are|would|could|shall|did|may)\b/i.test(q)) {
+    return Math.random() < 0.6 ? set.yes() : set.no();
+  }
+  return set.other(q);
+}
+
+const $ = id => document.getElementById(id);
+const slider = $('temp');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let level = LEVELS[2];
+let t = 0.6;
+
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const mix = (a, b, f) => `rgb(${hex(a).map((v, i) => Math.round(v + (hex(b)[i] - v) * f)).join(',')})`;
+const clamp = (v, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
+
+function paletteAt(t) {
+  let i = 0;
+  while (i < STOPS.length - 2 && t > STOPS[i + 1].t) i++;
+  const a = STOPS[i], b = STOPS[i + 1];
+  const f = clamp((t - a.t) / (b.t - a.t));
+  const out = {};
+  for (const k of ['bg1', 'bg2', 'text', 'accent', 'btn']) out[k] = mix(a[k], b[k], f);
+  return out;
+}
+
+// Split text into per-letter spans so each one can wobble on its own
+function lettersInto(el, text) {
+  el.textContent = '';
+  const chars = [];
+  for (const part of text.split(/(\s+)/)) {
+    if (!part) continue;
+    if (/^\s+$/.test(part)) { el.appendChild(document.createTextNode(' ')); continue; }
+    const word = document.createElement('span');
+    word.className = 'word';
+    word.setAttribute('aria-hidden', 'true');
+    for (const c of part) {
+      const s = document.createElement('span');
+      s.className = 'ch';
+      s.textContent = c;
+      s.style.animationDelay = (-Math.random() * 1.8).toFixed(2) + 's';
+      word.appendChild(s);
+      chars.push(s);
+    }
+    el.appendChild(word);
+  }
+  return chars;
+}
+
+function update() {
+  const temp = +slider.value;
+  t = temp / 1.3;
+  const p = paletteAt(t);
+  const root = document.documentElement.style;
+  root.setProperty('--bg1', p.bg1);
+  root.setProperty('--bg2', p.bg2);
+  root.setProperty('--text', p.text);
+  root.setProperty('--accent', p.accent);
+  root.setProperty('--btn-text', p.btn);
+  root.setProperty('--card', `rgba(255,255,255,${(0.75 - clamp(t * 3) * 0.66).toFixed(2)})`);
+  root.setProperty('--w', Math.max(0, (t - 0.45) * 3).toFixed(2));
+  root.setProperty('--spin', (20 - t * 18).toFixed(1) + 's');
+  root.setProperty('--stars', clamp((t - 0.15) * 2).toFixed(2));
+  root.setProperty('--psy', (clamp((t - 0.7) * 3.3) * 0.55).toFixed(2));
+
+  level = LEVELS.find(l => temp <= l.max);
+  document.body.className = 'lvl-' + level.key;
+  $('tempValue').textContent = temp.toFixed(2);
+  $('personaName').textContent = level.name;
+  $('personaDesc').textContent = level.desc;
+}
+
+function makeStars() {
+  const box = $('stars');
+  for (let i = 0; i < 70; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 100 + '%';
+    s.style.animationDelay = (-Math.random() * 3) + 's';
+    s.style.transform = `scale(${(0.4 + Math.random()).toFixed(2)})`;
+    box.appendChild(s);
+  }
+}
+
+// Sparkle trail once things get mystical
+let lastSpark = 0;
+addEventListener('pointermove', e => {
+  if (reduceMotion || t < 0.45 || e.timeStamp - lastSpark < 40) return;
+  lastSpark = e.timeStamp;
+  const s = document.createElement('span');
+  s.className = 'spark';
+  s.textContent = t > 0.8 ? ['✦', '✺', '☄', '✿', '★'][Math.floor(Math.random() * 5)] : '✦';
+  s.style.left = e.clientX + 'px';
+  s.style.top = e.clientY + 'px';
+  document.body.appendChild(s);
+  setTimeout(() => s.remove(), 900);
+});
+
+async function askOracle(question, temperature) {
+  if (location.protocol === 'file:') return { demo: true };
+  try {
+    const r = await fetch('/api/oracle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, temperature }),
+    });
+    // No API function behind this server (e.g. a plain local preview) → demo mode
+    if (!(r.headers.get('content-type') || '').includes('application/json')) return { demo: true };
+    const data = await r.json().catch(() => ({}));
+    if (data.error === 'missing_key') return { demo: true, note: 'No API key set on the server yet, so this is a demo prophecy.' };
+    if (!r.ok) throw new Error(data.error || 'The spirits are unreachable.');
+    return data;
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+function showAnswer(question, temperature, text, note) {
+  $('answer').classList.add('show');
+  $('answerMeta').textContent = `${level.name} · temperature ${temperature.toFixed(2)}`;
+  $('answerQ').textContent = `“${question}”`;
+  const el = $('answerText');
+  el.setAttribute('aria-label', text);
+  const chars = lettersInto(el, text);
+  $('answerNote').textContent = note || '';
+  let i = 0;
+  (function reveal() {
+    for (let k = 0; k < 2 && i < chars.length; k++, i++) chars[i].classList.add('on');
+    if (i < chars.length) requestAnimationFrame(reveal);
+  })();
+  $('answer').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
+  addHistory(question, temperature, text);
+  flyWitch();
+}
+
+// A witch on a broom crosses the screen after every answer, leaving sparkles behind
+function flyWitch() {
+  if (reduceMotion) return;
+  const w = $('witch');
+  w.style.top = (12 + Math.random() * 40) + 'vh';
+  w.classList.remove('fly');
+  void w.offsetWidth; // restart the animation
+  w.classList.add('fly');
+  const trail = setInterval(() => {
+    const r = w.getBoundingClientRect();
+    const s = document.createElement('span');
+    s.className = 'spark';
+    s.textContent = ['✦', '✧', '★', '✺'][Math.floor(Math.random() * 4)];
+    s.style.left = (r.left + 8) + 'px';
+    s.style.top = (r.top + r.height * 0.62 + (Math.random() * 16 - 8)) + 'px';
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 900);
+  }, 70);
+  setTimeout(() => { clearInterval(trail); w.classList.remove('fly'); }, 4200);
+}
+
+function addHistory(question, temperature, text) {
+  const li = document.createElement('li');
+  li.innerHTML = '<b></b><br><span></span><br><small></small>';
+  li.querySelector('b').textContent = question;
+  li.querySelector('span').textContent = text;
+  li.querySelector('small').textContent = `${level.name} · temp ${temperature.toFixed(2)}`;
+  const list = $('historyList');
+  list.prepend(li);
+  while (list.children.length > 6) list.lastChild.remove();
+  $('history').hidden = list.children.length < 2;
+}
+
+$('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const question = $('question').value.trim();
+  if (!question) return $('question').focus();
+  const temperature = +slider.value;
+  const btn = $('askBtn');
+  const ball = $('ball');
+  const msgs = level.loading;
+  let m = 0;
+  btn.disabled = true;
+  btn.textContent = msgs[0];
+  const ticker = setInterval(() => { btn.textContent = msgs[++m % msgs.length]; }, 1200);
+  ball.classList.add('thinking');
+
+  const [res] = await Promise.all([askOracle(question, temperature), new Promise(r => setTimeout(r, 1400))]);
+
+  clearInterval(ticker);
+  ball.classList.remove('thinking');
+  btn.disabled = false;
+  btn.textContent = '🔮 Consult the Oracle';
+
+  if (res.demo) {
+    showAnswer(question, temperature, demoAnswer(question, level.key),
+      res.note || 'Demo mode: deploy on Vercel with your API key for real prophecies.');
+  } else if (res.error) {
+    showAnswer(question, temperature, 'The mists are too thick right now. Try again in a moment.', res.error);
+  } else {
+    showAnswer(question, temperature, res.answer, '');
+  }
+});
+
+$('chips').addEventListener('click', e => {
+  if (e.target.classList.contains('chip')) {
+    $('question').value = e.target.textContent;
+    $('question').focus();
+  }
+});
+
+slider.addEventListener('input', update);
+lettersInto($('title'), 'Always Ask the Oracle').forEach(c => c.classList.add('on'));
+makeStars();
+update();
+</script>
+</body>
+</html>
